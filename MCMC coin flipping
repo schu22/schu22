@@ -1,10 +1,11 @@
-#
+#importing necessary modules
 import numpy as np
 import random as rd
 import matplotlib.pyplot as plt
 %matplotlib inline
 np.seterr(divide='ignore', invalid='ignore')
 
+#generates priors for a given number of models
 nummodels = 11
 def pr(nummodels):
 	priors = []
@@ -13,16 +14,19 @@ def pr(nummodels):
 		priors = priors + [1/nummodels]
 	return priors
     
+#generates models for a given number of models
 def mod(nummodels):
 	models = []
   for x in range(nummodels):
 		models = models + [x/(nummodels-1)]
 	return models
     
+#i should have done this at the beginning, but here i'm converting the lists to arrays so i can perform numpy operations on them
 priors = np.array(pr(nummodels))
 models = np.array(mod(nummodels))
 oppmodels = 1-models
 
+#determines whether a given number gives heads or tails
 actprob = 0.3
 def hort(x,actprob):
 	if x < actprob:
@@ -30,6 +34,7 @@ def hort(x,actprob):
  	else:
 		return "tails"
         
+#generates a randomized list of numbers between 0 and 1 of a given length
 def randomlist(n):
 	x = 1
 	lst = []
@@ -38,6 +43,7 @@ def randomlist(n):
   lst = np.array(lst)
   return lst
     
+#creates an array of data using bayes' theorem and a while loop
 def mc(n):
 	rows,cols = (n+1,nummodels)
 	arr = [[0 for i in range (cols)] for j in range(rows)]
@@ -51,7 +57,8 @@ def mc(n):
 			arr[k] = np.multiply(arr[k-1],oppmodels)/(1-np.dot(arr[k-1],models))
 		k = k+1
 	return arr[n]
-    
+
+#determines the most probable model
 def bestmods(n):
 	result = mc(n)
 	index = np.array(np.where(result == np.amax(result)))
@@ -59,7 +66,8 @@ def bestmods(n):
 	if len(index) == 1:
 		index = index[0][0]
 	return (index,np.amax(result))
-    
+
+#graphs the accuracy of the correct model
 def graphit(n):
 	xaxis = [i for i in range(n)]
 	yaxis = [mc(j)[int(actprob*(nummodels-1))] for j in range(n)]
