@@ -1,0 +1,133 @@
+#importing necessary modules
+import numpy as np
+import random as rd
+import matplotlib.pyplot as plt
+%matplotlib inline
+np.seterr(divide='ignore', invalid='ignore')
+
+#generates priors for a given number of models
+nummodels = 11
+def pr(nummodels):
+	priors = []
+	x = 1
+	for x in range(nummodels):
+		priors = priors + [1/nummodels]
+	return priors
+	
+#generates models for a given number of models
+def mod(nummodels):
+	models = []
+	x = 0
+  for x in range(nummodels):
+  	models = models + [x/(nummodels-1)]
+	return models
+	
+#i should have done this at the beginning, but here i'm converting the lists to arrays so i can perform numpy operations on them
+priors = np.array(pr(nummodels))
+models = np.array(mod(nummodels))
+oppmodels = 1-models
+
+#determines whether a given number gives heads or tails
+actprob = 0.3
+def hort(x,actprob):
+	if x < actprob:
+		return "heads"
+	else:
+		return "tails"
+#generates a randomized list of numbers between 0 and 1 of a given length AND creates a set random list of length 1000
+def randomlist(n):
+	x = 1
+	lst = []
+	for x in range(n):
+		lst = lst + [rd.random()]
+	lst = np.array(lst)
+	return lst
+randomlist1 = randomlist(10**3)
+
+#creates an array of data using bayes' theorem and a while loop
+def mc(n):
+	rows,cols = (n+1,nummodels)
+	arr = [[0 for i in range (cols)] for j in range(rows)]
+	arr[0] = priors
+	k = 1
+	while k <= n:
+		if hort(randomlist1[k-1],actprob) == "heads":
+			arr[k] = np.multiply(arr[k-1],models)/np.dot(arr[k-1],models)
+		else:
+			arr[k] = np.multiply(arr[k-1],oppmodels)/(1-np.dot(arr[k-1],models))
+		k = k+1
+	return arr[n]
+	
+#determines the most probable model
+def bestmods(n):
+	result = mc(n)
+	index = np.array(np.where(result == np.amax(result)))
+	index = index * 1/(nummodels-1)
+	if len(index) == 1:
+		index = index[0][0]
+	return (index,np.amax(result))
+	
+#creates an array of the probabilities of correct model
+def listit(n):
+	num = int(actprob*(nummodels-1))
+	return [mc(j)[num] for j in range(n)]
+
+#graphs the accuracy of the correct model
+def graphit2(n):
+	xaxis = [i for i in range(n)]
+	plt.xlabel("n")
+	plt.ylabel("p(model|data)")
+	plt.plot(xaxis,listit(n))
+	plt.show()
+	return listit(n)
+	
+#finds instances where correct model has low probability
+def findbads(n):
+	mean = np.mean(listit(n),axis = None)
+	lst = []
+	for i in listit(n):
+		if i < mean:
+			lst = lst + [np.where(i)]
+	return lst
+	
+#finds mean at a given n
+def mu(n):
+	return np.dot(models,mc(n))
+		
+#lists means up to a given n
+def listmu(n):
+	lst = []
+	for i in range(n):
+		lst = lst + [mu(i)]
+	return lst
+	
+#graphs means up to a given n and correct mean
+def graphmu(n):
+	xaxis = [i for i in range(n)]
+	plt.xlabel("n")
+	plt.ylabel("mu")
+	plt.plot(xaxis,listmu(n))
+	plt.hlines(y=actprob, xmin=0, xmax=n)
+	plt.show()
+	return listmu(n)
+	
+#finds standard deviation at a given n
+def std1(n):
+	sqd = models**2
+  return (np.dot(sqd,mc(n))-mu(n)**2)**0.5
+	
+#lists standard deviations up to a given n
+def liststd(n):
+	lst = []
+	for i in range(n):
+		lst = lst + [std1(i)]
+	return lst
+	
+#graphs standard deviations up to a given n
+def graphstd(n):
+	xaxis = [i for i in range(n)]
+	plt.xlabel("n")
+	plt.ylabel("std")
+	plt.plot(xaxis,liststd(n))
+	plt.show()
+	return liststd(n)
